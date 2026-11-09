@@ -1,0 +1,252 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>BÀI 14 – NGỮ PHÁP - Flashcard</title>
+<style>
+*{box-sizing:border-box}
+body{
+  margin:0; min-height:100vh; font-family:Arial,"Microsoft YaHei",sans-serif;
+  background:#fdfbf7;
+  display:flex; justify-content:center; color:#202124;
+}
+.app{width:min(860px,96vw); padding:30px 0 40px}
+h1{text-align:center;margin:0 0 15px;font-size:38.4px; font-weight: bold;}
+.progress{text-align:center;font-size:21.6px;color:#444;margin-bottom:20px; font-weight: bold;}
+.card-wrap{perspective:1200px; cursor:pointer}
+.card{
+  width:100%; height:592px; position:relative; transform-style:preserve-3d;
+  transition:transform .55s ease;
+}
+.card.flipped{transform:rotateY(180deg)}
+.face{
+  position:absolute; inset:0; backface-visibility:hidden; -webkit-backface-visibility:hidden;
+  border-radius:24px; background:white; box-shadow:0 15px 45px rgba(0,0,0,.15);
+  display:flex; flex-direction:column; padding:36px; border:3px solid #eee; overflow-y:auto;
+}
+.front{justify-content:flex-start; align-items:flex-start; text-align:left}
+.back{transform:rotateY(180deg); text-align:left; align-items:flex-start; justify-content:flex-start; padding-top:40px;}
+
+.hl{color: #7c2d12; font-weight: bold; background-color: #fef08a; padding: 2px 6px; border-radius: 4px; border: 1px solid #eab308;}
+.hl-blue { color: #ffffff; font-weight: bold; background-color: #2563eb; padding: 2px 6px; border-radius: 4px; }
+.hl-red { color: #dc2626; font-weight: bold; }
+
+/* Pinyin mặt trước: căn giữa */
+.pinyin{
+  font-size:1.68em;
+  color:#666666;
+  margin-bottom:10px;
+  font-weight:bold;
+  text-align:center;
+  width:100%;
+}
+
+.zh-front { font-size: 2.16em; font-weight: bold; margin-bottom: 6px; line-height: 1.3; color: #dc2626; text-align: center; width: 100%; }
+
+/* Mặt sau */
+.zh-back { color: #2563eb; font-weight: bold; font-size: 1.74em; line-height: 1.2; display: block; margin-top: 12px; margin-bottom: 2px; }
+.pinyin-back { color: #666666; font-weight: bold; font-size: 1.2em; display: block; margin: 2px 0; }
+.vi-back { font-size: 1.2em; color: #333; display: block; margin-bottom: 12px; }
+
+.desc-front { font-size: 1.38em; color: #333; margin: 8px 0; text-align: left; width: 100%; line-height: 1.4; }
+.desc{font-size: 1.38em; color: #333; margin: 0; text-align: left; width: 100%; line-height: 1.4;}
+
+.controls{display:flex;gap:20px;justify-content:center;margin-top:30px}
+button{
+  border:0;border-radius:20px;padding:20px 35px;font-size:26.4px;
+  cursor:pointer;background:#e9eef7;color:#233044; font-weight: bold; box-shadow: 0 4px 6px rgba(0,0,0,.1);
+}
+button.primary{background:#2563eb;color:white}
+</style>
+</head>
+
+<body>
+<div class="app">
+  <h1 id="title">BÀI 14 – NGỮ PHÁP</h1>
+  <div class="progress" id="progress"></div>
+
+  <div class="card-wrap" id="cardWrap" onclick="flipCard()">
+    <div class="card" id="card">
+      <div class="face front" id="frontFace"></div>
+      <div class="face back" id="backFace"></div>
+    </div>
+  </div>
+
+  <div class="controls">
+    <button onclick="event.stopPropagation();prevCard()">← TRƯỚC</button>
+    <button class="primary" onclick="event.stopPropagation();flipCard()">LẬT THẺ</button>
+    <button onclick="event.stopPropagation();nextCard()">TIẾP →</button>
+  </div>
+</div>
+
+<script>
+const cards = [
+  {
+    f: "<div class='zh-front'>BAO…? <span class='hl-red'></span></div>" +
+       "<div class='pinyin'>多…?</div>" +
+       "<div class='desc-front'>" +
+       "<span class='hl'> Chủ ngữ + (有) 多 + tính từ</span><br>" +
+       "Dùng để hỏi tính chất của sự vật gì đó ở mức độ nào." +
+       "</div>",
+    b: "<div class='desc'>" +
+       "<span class='zh-back'>离这儿多远?</span><span class='pinyin-back'>lí zhèr duō yuǎn?</span><span class='vi-back'>(Cách đây bao xa?)</span>" +
+       "<span class='zh-back'>从这儿到百货大楼有多远?</span><span class='pinyin-back'>cóng zhèr dào bǎihuò dàlóu yǒu duō yuǎn?</span><span class='vi-back'>(Từ đây đến Bách hóa đại lâu có bao xa?)</span>" +
+       "<span class='zh-back'>你今年多大?</span><span class='pinyin-back'>nǐ jīnnián duō dà?</span><span class='vi-back'>(Năm nay bạn bao nhiêu tuổi?)</span>" +
+       "<span class='zh-back'>他有多高?</span><span class='pinyin-back'>tā yǒu duō gāo?</span><span class='vi-back'>(Anh ấy cao bao nhiêu?)</span>" +
+       "</div>"
+  },
+  {
+    f: "<div class='zh-front'>HƠN… <span class='hl-red'></span></div>" +
+       "<div class='pinyin'>…多</div>" +
+       "<div class='desc-front'>" +
+       "Nếu con số kết thúc bằng số 0, <span class='hl-red'>多</span> đứng trước lượng từ<br>" +
+       "Nếu con số kết thúc bằng 1-9, <span class='hl-red'>多</span> đứng sau lượng từ<br>" +
+       "Chú ý:<br>" +
+       "Lượng từ không thể lẻ được thì sẽ không dùng với <span class='hl-red'>多</span>.<br>" +
+       "Khi con số là 10, <span class='hl-red'>多</span> có thể đứng ở cả hai vị trí trước hoặc sau lượng từ, với hai ý nghĩa, một là lẻ của lượng từ, hai là lẻ của số 10<br>" +
+       "<span class='hl'>十公斤多水果</span><br>" +
+       "(Hơn mười kilôgam hoa quả., tức là 10,1 10,2 10,3…)<br>" +
+       "<span class='hl'>十多公斤水果</span><br>" +
+       "(Mười mấy kilôgam hoa quả, tức là 11, 12, 13)" +
+       "</div>",
+    b: "<div class='desc'>" +
+       "<span class='zh-back'>这件衬衣三十多块钱。</span><span class='pinyin-back'>zhè jiàn chènyī sānshí duō kuài qián.</span><span class='vi-back'>(Cái áo sơ mi này hơn 30 tệ. - giá nằm trong khoảng 30-39 tệ.)</span>" +
+       "<span class='zh-back'>从这儿到我们学校只用十多分钟。</span><span class='pinyin-back'>cóng zhèr dào wǒmen xuéxiào zhǐ yòng shí duō fēnzhōng.</span><span class='vi-back'>(Từ đây đến trường chúng tôi chỉ mất hơn 10 phút.)</span>" +
+       "<span class='zh-back'>这些橘子三斤多。</span><span class='pinyin-back'>zhèxiē júzi sān jīn duō.</span><span class='vi-back'>(Những quả quýt này nặng hơn 3 cân.)</span>" +
+       "<span class='zh-back'>下午五点多我去找你。</span><span class='pinyin-back'>xiàwǔ wǔ diǎn duō wǒ qù zhǎo nǐ.</span><span class='vi-back'>(Hơn 5 giờ chiều tôi sẽ đi tìm bạn.)</span>" +
+       "<span class='zh-back'>这本词典二十九块多。</span><span class='pinyin-back'>zhè běn cídiǎn èrshíjiǔ kuài duō.</span><span class='vi-back'>(Quyển từ điển này hơn 29 tệ.)</span>" +
+       "<span class='zh-back'>一百多个人。</span><span class='pinyin-back'>yìbǎi duō gè rén.</span><span class='vi-back'>(Hơn 100 người)</span>" +
+       "<span class='zh-back'>一个多月</span><span class='pinyin-back'>yí gè duō yuè</span><span class='vi-back'>(Hơn 1 tháng)</span>" +
+       "<span class='zh-back'>一公斤半</span><span class='pinyin-back'>yì gōngjīn bàn</span><span class='vi-back'>(Một kilôgam rưỡi.)</span>" +
+       "<span class='zh-back'>我买了几斤多苹果。</span><span class='pinyin-back'>wǒ mǎi le jǐ jīn duō píngguǒ.</span><span class='vi-back'>(Tôi mua hơn một cân táo.)</span>" +
+       "<span class='zh-back'>我们已经学了一百多个生词了。</span><span class='pinyin-back'>wǒmen yǐjīng xué le yìbǎi duō gè shēngcí le.</span><span class='vi-back'>(Chúng tôi đã học hơn một trăm từ mới rồi.)</span>" +
+       "<span class='zh-back'>老董吃涮羊肉，一顿能吃二斤多。</span><span class='pinyin-back'>lǎo dǒng chī shuàn yángròu, yí dùn néng chī èr jīn duō.</span><span class='vi-back'>(Ông Đổng ăn thịt cừu nhúng, một bữa ăn được hơn hai cân.)</span>" +
+       "<span class='zh-back'>今年的产量比去年增加了一倍多。</span><span class='pinyin-back'>jīnnián de chǎnliàng bǐ qùnián zēngjiā le yí bèi duō.</span><span class='vi-back'>(Sản lượng năm nay tăng hơn gấp đôi so với năm ngoái.)</span>" +
+       "</div>"
+  },
+  {
+    f: "<div class='zh-front'>NĂM SÁU CÁI <span class='hl-red'></span></div>" +
+       "<div class='pinyin'>五六个</div>" +
+       "<div class='desc-front'>" +
+       "Khi nói ước lượng mà không dùng <span class='hl-red'>多</span>, thì có thể dùng hai số liền kề nhau.<br>" +
+       "Cách này thường dùng cho các số nhỏ hoặc khi muốn diễn tả một phạm vi gần gũi.<br>" +
+       "Chú ý: không dùng hai cặp sau<br>" +
+       "<span class='hl'>九十个</span> (vì sẽ lẫn với 90)<br>" +
+       "<span class='hl'>十十一个</span> (vì nghe sẽ dễ lẫn)" +
+       "</div>",
+    b: "<div class='desc'>" +
+       "<span class='zh-back'>这个孩子有六七岁。</span><span class='pinyin-back'>zhège háizi yǒu liù qī suì.</span><span class='vi-back'>(Đứa bé này khoảng 6, 7 tuổi.)</span>" +
+       "<span class='zh-back'>从这儿到百货大楼有十三四公里。</span><span class='pinyin-back'>cóng zhèr dào bǎihuò dàlóu yǒu shísān sì gōnglǐ.</span><span class='vi-back'>(Từ đây đến Bách hóa tổng hợp khoảng 13, 14 cây số.)</span>" +
+       "<span class='zh-back'>教室里有四五十个学生。</span><span class='pinyin-back'>jiàoshì lǐ yǒu sì wǔshí gè xuéshēng.</span><span class='vi-back'>(Trong lớp học có khoảng 40, 50 học sinh.)</span>" +
+       "</div>"
+  },
+  {
+    f: "<div class='zh-front'>HAY LÀ… ĐI <span class='hl-red'></span></div>" +
+       "<div class='pinyin'>还是…吧</div>" +
+       "<div class='desc-front'>" +
+       "Tiếng Việt có thể hiểu là: Hay là... đi, Thôi thì… vậy, Vẫn là nên… thôi.<br>" +
+       "Dùng khi muốn đưa ra một sự lựa chọn mà ta cảm thấy là tốt hơn, hợp lý hơn so với những lựa chọn khác." +
+       "</div>",
+    b: "<div class='desc'>" +
+       "<span class='zh-back'>你还是过来吧。</span><span class='pinyin-back'>nǐ háishì guòlái ba.</span><span class='vi-back'>(Bạn vẫn là qua đây đi.)</span>" +
+       "<span class='zh-back'>还是走那条路吧.</span><span class='pinyin-back'>háishì zǒu nà tiáo lù ba.</span><span class='vi-back'>(Vẫn là nên đi đường kia vậy.)</span>" +
+       "<span class='zh-back'>还是坐火车吧.</span><span class='pinyin-back'>háishì zuò huǒchē ba.</span><span class='vi-back'>(Thôi thì đi tàu hỏa vậy.)</span>" +
+       "<span class='zh-back'>咱们还是吃面条吧。</span><span class='pinyin-back'>zánmen háishì chī miàntiáo ba.</span><span class='vi-back'>(Chúng ta vẫn là nên ăn mì thôi.)</span>" +
+       "<span class='zh-back'>还是送她花吧。</span><span class='pinyin-back'>háishì sòng tā huā ba.</span><span class='vi-back'>(Vẫn là tặng hoa cho cô ấy đi.)</span>" +
+       "<span class='zh-back'>我最近很忙，我们还是周末再出去吃饭吧！</span><span class='pinyin-back'>wǒ zuìjìn hěn máng, wǒmen háishì zhōumò zài chūqù chīfàn ba!</span><span class='vi-back'>(Dạo này tôi bận lắm, cuối tuần chúng ta hẵng ra ngoài ăn nhé!)</span>" +
+       "<span class='zh-back'>已经晚上十一点了，我还是明天早上再给老师打电话吧！</span><span class='pinyin-back'>yǐjīng wǎnshang shíyī diǎn le, wǒ háishì míngtiān zǎoshang zài gěi lǎoshī dǎ diànhuà ba!</span><span class='vi-back'>(Đã 11 giờ đêm rồi, tôi để sáng mai gọi cho giáo viên vậy!)</span>" +
+       "<span class='zh-back'>去学校，可以坐公车，也可以坐捷运，但是坐捷运比较快，我们还是坐捷运去吧！</span><span class='pinyin-back'>qù xuéxiào, kěyǐ zuò gōngchē, yě kěyǐ zuò jiéyùn, dànshì zuò jiéyùn bǐjiào kuài, wǒmen háishì zuò jiéyùn qù ba!</span><span class='vi-back'>(Đến trường có thể đi xe buýt, cũng có thể đi tàu điện ngầm, nhưng tàu điện ngầm nhanh hơn, chúng ta vẫn nên đi tàu điện ngầm đi!)</span>" +
+       "<span class='zh-back'>坐公车很慢，我们还是不要坐公车吧！</span><span class='pinyin-back'>zuò gōngchē hěn màn, wǒmen háishì bú yào zuò gōngchē ba!</span><span class='vi-back'>(Đi xe buýt chậm lắm, chúng ta đừng đi xe buýt nữa nhé!)</span>" +
+       "<span class='zh-back'>雨下得很大，今天你还是别回家吧！</span><span class='pinyin-back'>yǔ xià de hěn dà, jīntiān nǐ háishì bié huí jiā ba!</span><span class='vi-back'>(Mưa to lắm, hôm nay bạn đừng về nhà nhé!)</span>" +
+       "</div>"
+  },
+  {
+    f: "<div class='zh-front'>TỪ... VỀ PHÍA... <span class='hl-red'></span></div>" +
+       "<div class='pinyin'>从...往...</div>" +
+       "<div class='desc-front'>" +
+       "Dùng để diễn tả hướng di chuyển.<br>" +
+       "<span class='hl'>从</span> chỉ điểm xuất phát của di chuyển, <span class='hl'>往</span> chỉ phương hướng hoặc điểm cuối của di chuyển.<br>" +
+       "从...往... chỉ quan hệ có tính phương hướng giữa hai địa điểm, dùng trước động từ.<br>" +
+       "Nếu điểm xuất phát của 从... tương đối rõ ràng, thường có thể lược bỏ.<br><br>" +
+       "<b>Hỏi cách đi:</b><br>" +
+       "去邮局怎么走？<br>" +
+       "(Bưu điện đi đường nào?)" +
+       "</div>",
+    b: "<div class='desc'>" +
+       "<span class='zh-back'>请问，图书馆怎么走？</span><span class='pinyin-back'>qǐngwèn, túshūguǎn zěnme zǒu?</span><span class='vi-back'>(Xin hỏi, thư viện đi thế nào?)</span>" +
+       "<span class='zh-back'>你往前一直走，就到了。</span><span class='pinyin-back'>nǐ wǎng qián yìzhí zǒu, jiù dào le.</span><span class='vi-back'>(Bạn đi thẳng về phía trước, là đến rồi.)</span>" +
+       "<span class='zh-back'>你不能(从这里)往前走，前面没有路了。</span><span class='pinyin-back'>nǐ bù néng (cóng zhèlǐ) wǎng qián zǒu, qiánmiàn méiyǒu lù le.</span><span class='vi-back'>(Bạn không thể (từ đây) đi về phía trước, phía trước không có đường nữa.)</span>" +
+       "<span class='zh-back'>到前面十字路口往左拐，再走100米就到了。</span><span class='pinyin-back'>dào qiánmiàn shízì lùkǒu wǎng zuǒ guǎi, zài zǒu yībǎi mǐ jiù dào le.</span><span class='vi-back'>(Đến ngã tư phía trước rẽ trái, đi thêm 100 mét là tới.)</span>" +
+       "<span class='zh-back'>从邮局往北一直走，到了路口左转，再往前走就到了。</span><span class='pinyin-back'>cóng yóujú wǎng běi yìzhí zǒu, dào le lùkǒu zuǒ zhuǎn, zài wǎng qián zǒu jiù dào le.</span><span class='vi-back'>(Từ bưu điện đi thẳng về phía bắc, đến ngã tư rẽ trái, rồi đi thẳng về phía trước là đến.)</span>" +
+       "<span class='zh-back'>他俩沿着向西的一条公路往家里赶去。</span><span class='pinyin-back'>tā liǎ yánzhe xiàng xī de yī tiáo gōnglù wǎng jiālǐ gǎn qù.</span><span class='vi-back'>(Hai người họ men theo một con đường hướng về phía tây, vội vã đi về nhà.)</span>" +
+       "</div>"
+  },
+  {
+    f: "<div class='zh-front'>TỪ… ĐẾN…</div>" +
+       "<div class='pinyin'>从… 到…</div>" +
+       "<div class='desc-front'>" +
+       "<b>Ý nghĩa:</b> Dùng để khoanh vùng, từ đâu đến đâu, từ bao giờ đến bao giờ, từ ai đến ai, từ bao nhiêu đến bao nhiêu...<br><br>" +
+       "<span class='hl'>从 + A + 到 + B, cụm động từ</span><br>" +
+       "<span class='hl'>从 + A + động từ + 到 + B</span><br><br>" +
+       "Thường được dùng để chỉ từ một điểm khởi đầu nào đó đến một điểm kết thúc nào đó. Điểm khởi đầu và điểm kết thúc này có thể là địa điểm, thời gian cụ thể, cũng có thể là cấp độ, phạm vi, sự phát triển biến đổi mang tính trừu tượng..." +
+       "</div>",
+    b: "<div class='desc'>" +
+       "<span class='zh-back'>从我家到那个游泳池有一点远。</span><span class='pinyin-back'>cóng wǒ jiā dào nàge yóuyǒngchí yǒu yìdiǎn yuǎn.</span><span class='vi-back'>(Từ nhà tôi đến cái hồ bơi đó hơi xa một chút.)</span>" +
+       "<span class='zh-back'>你从早到晚都忙什么呢？</span><span class='pinyin-back'>nǐ cóng zǎo dào wǎn dōu máng shénme ne?</span><span class='vi-back'>(Bạn bận rộn cái gì từ sáng đến tối vậy?)</span>" +
+       "<span class='zh-back'>我从我朋友家到这个地方来。</span><span class='pinyin-back'>wǒ cóng wǒ péngyǒu jiā dào zhège dìfāng lái.</span><span class='vi-back'>(Tôi từ nhà bạn tôi đến chỗ này.)</span>" +
+       "<span class='zh-back'>他从图书馆到那家餐厅去吃饭。</span><span class='pinyin-back'>tā cóng túshūguǎn dào nà jiā cāntīng qù chīfàn.</span><span class='vi-back'>(Anh ấy từ thư viện đến nhà hàng đó ăn cơm.)</span>" +
+       "<span class='zh-back'>我们的书法课不是从九点到十一点。</span><span class='pinyin-back'>wǒmen de shūfǎ kè bú shì cóng jiǔ diǎn dào shíyī diǎn.</span><span class='vi-back'>(Lớp thư pháp của chúng tôi không phải từ 9 giờ đến 11 giờ.)</span>" +
+       "<span class='zh-back'>从北京到上海，有多少公里？</span><span class='pinyin-back'>cóng Běijīng dào Shànghǎi, yǒu duōshǎo gōnglǐ?</span><span class='vi-back'>(Từ Bắc Kinh đến Thượng Hải, có bao nhiêu ki-lô-mét?)</span>" +
+       "<span class='zh-back'>明天早上五点从我家出发。</span><span class='pinyin-back'>míngtiān zǎoshang wǔ diǎn cóng wǒ jiā chūfā.</span><span class='vi-back'>(Năm giờ sáng mai xuất phát từ nhà tôi.)</span>" +
+       "<span class='zh-back'>从我家到你家有直达公共汽车。</span><span class='pinyin-back'>cóng wǒ jiā dào nǐ jiā yǒu zhídá gōnggòng qìchē.</span><span class='vi-back'>(Từ nhà tôi đến nhà bạn có xe buýt đi thẳng.)</span>" +
+       "<span class='zh-back'>从东到西，一共有十座楼房。</span><span class='pinyin-back'>cóng dōng dào xī, yígòng yǒu shí zuò lóufráng.</span><span class='vi-back'>(Từ đông sang tây, tổng cộng có mười tòa nhà.)</span>" +
+       "<span class='zh-back'>从九点半到十一点半，我们上口语课。</span><span class='pinyin-back'>cóng jiǔ diǎn bàn dào shíyī diǎn bàn, wǒmen shàng kǒuyǔ kè.</span><span class='vi-back'>(Từ chín giờ rưỡi đến mười một giờ rưỡi, chúng tôi học lớp khẩu ngữ.)</span>" +
+       "<span class='zh-back'>从学生到老师都很高兴。</span><span class='pinyin-back'>cóng xuéshēng dào lǎoshī dōu hěn gāoxìng.</span><span class='vi-back'>(Từ học sinh đến giáo viên đều rất vui mừng.)</span>" +
+       "<span class='zh-back'>超市从上午九点到晚上十点开门。</span><span class='pinyin-back'>chāoshì cóng shàngwǔ jiǔ diǎn dào wǎnshang shí diǎn kāimén.</span><span class='vi-back'>(Siêu thị mở cửa từ 9 giờ sáng đến 10 giờ tối.)</span>" +
+       "<span class='zh-back'>我今天从早上到晚上都有空，欢迎你们来我家。</span><span class='pinyin-back'>wǒ jīntiān cóng zǎo shang dào wǎnshang dōu yǒu kòng, huānyíng nǐmen lái wǒ jiā.</span><span class='vi-back'>(Hôm nay tôi từ sáng đến tối đều rảnh, chào mừng các bạn đến nhà tôi.)</span>" +
+       "</div>"
+  }
+];
+
+let idx = 0;
+
+function render() {
+  document.getElementById('frontFace').innerHTML = cards[idx].f;
+  document.getElementById('backFace').innerHTML = cards[idx].b;
+  document.getElementById('progress').innerText = `Thẻ ${idx + 1} / ${cards.length}`;
+}
+
+function flipCard() {
+  document.getElementById('card').classList.toggle('flipped');
+}
+
+function nextCard() {
+  idx = (idx + 1) % cards.length;
+  document.getElementById('card').classList.remove('flipped');
+  render();
+}
+
+function prevCard() {
+  idx = (idx - 1 + cards.length) % cards.length;
+  document.getElementById('card').classList.remove('flipped');
+  render();
+}
+
+document.addEventListener('keydown', function(event) {
+  if (event.key === 'ArrowRight' || event.key === 'ArrowDown') {
+    nextCard();
+    event.preventDefault();
+  } else if (event.key === 'ArrowLeft' || event.key === 'ArrowUp') {
+    prevCard();
+    event.preventDefault();
+  } else if (event.key === ' ' || event.key === 'Enter') {
+    flipCard();
+    event.preventDefault();
+  }
+});
+
+render();
+</script>
+</body>
+</html>
